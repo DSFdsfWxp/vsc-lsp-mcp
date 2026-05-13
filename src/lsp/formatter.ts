@@ -1,34 +1,14 @@
 import * as vscode from 'vscode'
 
-const kindNames: Record<number, string> = {
-  [vscode.CompletionItemKind.Text]: 'Text',
-  [vscode.CompletionItemKind.Method]: 'Method',
-  [vscode.CompletionItemKind.Function]: 'Function',
-  [vscode.CompletionItemKind.Constructor]: 'Constructor',
-  [vscode.CompletionItemKind.Field]: 'Field',
-  [vscode.CompletionItemKind.Variable]: 'Variable',
-  [vscode.CompletionItemKind.Class]: 'Class',
-  [vscode.CompletionItemKind.Interface]: 'Interface',
-  [vscode.CompletionItemKind.Module]: 'Module',
-  [vscode.CompletionItemKind.Property]: 'Property',
-  [vscode.CompletionItemKind.Unit]: 'Unit',
-  [vscode.CompletionItemKind.Value]: 'Value',
-  [vscode.CompletionItemKind.Enum]: 'Enum',
-  [vscode.CompletionItemKind.Keyword]: 'Keyword',
-  [vscode.CompletionItemKind.Snippet]: 'Snippet',
-  [vscode.CompletionItemKind.Color]: 'Color',
-  [vscode.CompletionItemKind.Reference]: 'Reference',
-  [vscode.CompletionItemKind.File]: 'File',
-  [vscode.CompletionItemKind.Folder]: 'Folder',
-  [vscode.CompletionItemKind.EnumMember]: 'EnumMember',
-  [vscode.CompletionItemKind.Constant]: 'Constant',
-  [vscode.CompletionItemKind.Struct]: 'Struct',
-  [vscode.CompletionItemKind.Event]: 'Event',
-  [vscode.CompletionItemKind.Operator]: 'Operator',
-  [vscode.CompletionItemKind.TypeParameter]: 'TypeParameter',
-  [vscode.CompletionItemKind.User]: 'User',
-  [vscode.CompletionItemKind.Issue]: 'Issue',
-}
+/**
+ * Dynamically generated mapping from CompletionItemKind numeric value to its name.
+ * Uses the enum's built-in reverse lookup instead of hardcoding all 27 entries.
+ */
+const kindNames: Record<number, string> = Object.fromEntries(
+  Object.entries(vscode.CompletionItemKind)
+    .filter(([, v]) => typeof v === 'number')
+    .map(([k, v]) => [v, k]),
+)
 
 /**
  * Extract plain text from hover content item
