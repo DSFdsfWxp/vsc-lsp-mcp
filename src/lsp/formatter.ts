@@ -23,7 +23,7 @@ const symbolKindNames = generateEnumNameMap(vscode.SymbolKind)
  * @param range - VSCode Range
  * @returns Plain object with start/end line and character
  */
-function formatRange(range: vscode.Range): { start: { line: number; character: number }; end: { line: number; character: number } } {
+function formatRange(range: vscode.Range): any {
   return {
     start: { line: range.start.line, character: range.start.character },
     end: { line: range.end.line, character: range.end.character },
@@ -41,7 +41,7 @@ function getFile(uri: vscode.Uri): string {
 }
 
 /**
- * Flatten a Location to a minimal plain object (start position only)
+ * Flatten a Location to a plain object
  *
  * @param loc - VSCode Location
  * @returns Plain object with file, line, character
@@ -49,8 +49,7 @@ function getFile(uri: vscode.Uri): string {
 function flattenLocation(loc: vscode.Location): Record<string, any> {
   return {
     file: getFile(loc.uri),
-    line: loc.range.start.line,
-    character: loc.range.start.character,
+    range: formatRange(loc.range),
   }
 }
 
@@ -143,8 +142,6 @@ export function formatCompletions(list: vscode.CompletionList): string {
 
 /**
  * Format Location[] into a clean JSON string.
- * Keeps: file path, start line + character.
- * Strips: end position (usually not needed for LLM context).
  *
  * @param locations - List of locations
  * @returns JSON string

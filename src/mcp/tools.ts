@@ -27,7 +27,7 @@ const ops = [
   'workspace_symbols',
   'class_file_contents',
   'rename',
-  'prepare_call_hierarchy',
+  'symbol_at_position',
   'incoming_calls',
   'outgoing_calls',
 ] as const
@@ -50,7 +50,7 @@ Operations:
 - workspace_symbols: Search symbols across workspace by query (uri/line/char ignored, pass any value)
 - class_file_contents: Decompile class from jdt:// URI (line/char ignored, pass any value; uri must be jdt://, see uriDesc)
 - rename: Rename symbol across workspace (requires newName)
-- prepare_call_hierarchy: Get call hierarchy item at position
+- symbol_at_position: Get symbol metadata (name, kind, range, file) at position
 - incoming_calls: Get all callers of symbol at position
 - outgoing_calls: Get all callees of symbol at position`
 
@@ -103,7 +103,7 @@ export function addLspTools(server: McpServer) {
         case 'rename':
           result = await rename(uri, line, character, newName!)
           break
-        case 'prepare_call_hierarchy':
+        case 'symbol_at_position':
           result = await prepareCallHierarchy(uri, line, character)
           break
         case 'incoming_calls':
