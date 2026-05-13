@@ -1,43 +1,47 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
 import { getDocument } from './tools'
+import { formatRename } from './formatter'
 
 /**
- * 执行符号重命名
- * @param uri 文档URI
- * @param line 行号（从0开始）
- * @param character 字符位置（从0开始）
- * @param newName 新名称
- * @returns 返回应用的重命名编辑（WorkspaceEdit）
+ * Rename a symbol across the workspace, returned as a JSON summary string.
+ * Does NOT list every individual edit to avoid overflowing context window.
+ *
+ * @param uri - The document URI
+ * @param line - Line number (0-based)
+ * @param character - Character offset (0-based)
+ * @param newName - The new name for the symbol
+ * @returns JSON string with rename summary
  */
 export async function rename(
   uri: string,
   line: number,
   character: number,
   newName: string,
-): Promise<vscode.WorkspaceEdit> {
+): Promise<string> {
   try {
     const document = await getDocument(uri)
     if (!document) {
-      throw new Error(`无法找到文档: ${uri}`)
+      throw new Error(`Failed to find document: ${uri}`)
     }
 
     const position = new vscode.Position(line, character)
 
-    logger.info(`执行重命名: ${uri} 行:${line} 列:${character} 新名称:${newName}`)
+    logger.info(`Renaming: ${uri} line:${line} col:${character} newName:${newName}`)
 
-    // 1. 首先检查是否可以重命名
-    const canRename = await vscode.commands.executeCommand<vscode.Range | { range: vscode.Range, placeholder: string }>(
+    const canRename = await vscode.commands.executeCommand<vscode.Range | {
+      range: vscode.Range
+      placeholder: string
+    }>(
       'vscode.prepareRename',
       document.uri,
       position,
     )
 
     if (!canRename) {
-      throw new Error('当前位置不支持重命名')
+      throw new Error('Rename is not supported at this position')
     }
 
-    // 2. 执行实际的重命名操作
     const edit = await vscode.commands.executeCommand<vscode.WorkspaceEdit>(
       'vscode.executeDocumentRenameProvider',
       document.uri,
@@ -46,16 +50,15 @@ export async function rename(
     )
 
     if (!edit) {
-      throw new Error('重命名未返回任何更改')
+      throw new Error('Rename returned no changes')
     }
 
-    // 3. 应用编辑（可选，如果调用方希望自己控制应用时机）
     await vscode.workspace.applyEdit(edit)
 
-    return edit
+    return formatRename(edit, newName)
   }
   catch (error) {
-    logger.error('执行重命名失败', error)
+    logger.error('Failed to rename symbol', error)
     throw error
   }
 }

@@ -1,41 +1,41 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
 import { getDocument } from './tools'
+import { formatLocations } from './formatter'
 
 /**
- * 获取符号定义位置
+ * Get the definition location of a symbol, returned as a JSON string.
  *
- * @param uri 文档URI
- * @param line 行号（从0开始）
- * @param character 字符位置（从0开始）
- * @returns 定义位置信息
+ * @param uri - The document URI
+ * @param line - Line number (0-based)
+ * @param character - Character offset (0-based)
+ * @returns JSON string of definition locations
  */
 export async function getDefinition(
   uri: string,
   line: number,
   character: number,
-): Promise<vscode.Location[]> {
+): Promise<string> {
   try {
     const document = await getDocument(uri)
     if (!document) {
-      throw new Error(`无法找到文档: ${uri}`)
+      throw new Error(`Failed to find document: ${uri}`)
     }
 
     const position = new vscode.Position(line, character)
 
-    logger.info(`获取定义: ${uri} 行:${line} 列:${character}`)
+    logger.info(`Getting definition: ${uri} line:${line} col:${character}`)
 
-    // 调用VSCode API获取定义位置
     const definitions = await vscode.commands.executeCommand<vscode.Location[]>(
       'vscode.executeDefinitionProvider',
       document.uri,
       position,
     )
 
-    return definitions || []
+    return formatLocations(definitions || [])
   }
   catch (error) {
-    logger.error('获取定义失败', error)
+    logger.error('Failed to get definition', error)
     throw error
   }
 }

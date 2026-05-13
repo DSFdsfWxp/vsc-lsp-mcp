@@ -28,7 +28,7 @@ export function addLspTools(server: McpServer) {
     },
     async ({ uri, line, character }) => {
       const result = await getCompletions(uri, line, character)
-      return { content: [{ type: 'text', text: JSON.stringify(result) }] }
+      return { content: [{ type: 'text', text: result }] }
     },
   )
 
@@ -45,7 +45,7 @@ export function addLspTools(server: McpServer) {
     },
     async ({ uri, line, character }) => {
       const result = await getDefinition(uri, line, character)
-      return { content: [{ type: 'text', text: JSON.stringify(result) }] }
+      return { content: [{ type: 'text', text: result }] }
     },
   )
 
@@ -62,7 +62,7 @@ export function addLspTools(server: McpServer) {
     },
     async ({ uri, line, character }) => {
       const result = await getHover(uri, line, character)
-      return { content: [{ type: 'text', text: JSON.stringify(result) }] }
+      return { content: [{ type: 'text', text: result }] }
     },
   )
 
@@ -79,7 +79,7 @@ export function addLspTools(server: McpServer) {
     },
     async ({ uri, line, character }) => {
       const result = await getReferences(uri, line, character)
-      return { content: [{ type: 'text', text: JSON.stringify(result) }] }
+      return { content: [{ type: 'text', text: result }] }
     },
   )
 
@@ -112,7 +112,7 @@ export function addLspTools(server: McpServer) {
     },
     async ({ uri, line, character, newName }) => {
       const result = await rename(uri, line, character, newName)
-      return { content: [{ type: 'text', text: JSON.stringify(result) }] }
+      return { content: [{ type: 'text', text: result }] }
     },
   )
 }

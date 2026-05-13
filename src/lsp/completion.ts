@@ -1,43 +1,43 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
 import { getDocument } from './tools'
+import { formatCompletions } from './formatter'
 
 /**
- * 获取代码补全建议
+ * Get code completion suggestions at a given position, returned as a JSON string.
  *
- * @param uri 文档URI
- * @param line 行号（从0开始）
- * @param character 字符位置（从0开始）
- * @returns 补全建议列表
+ * @param uri - The document URI
+ * @param line - Line number (0-based)
+ * @param character - Character offset (0-based)
+ * @returns JSON string of completion items
  */
 export async function getCompletions(
   uri: string,
   line: number,
   character: number,
-): Promise<vscode.CompletionList<vscode.CompletionItem>> {
+): Promise<string> {
   try {
     const document = await getDocument(uri)
     if (!document) {
-      throw new Error(`无法找到文档: ${uri}`)
+      throw new Error(`Failed to find document: ${uri}`)
     }
 
     const position = new vscode.Position(line, character)
 
-    logger.info(`获取代码补全: ${uri} 行:${line} 列:${character}`)
+    logger.info(`Getting completions: ${uri} line:${line} col:${character}`)
 
-    // 调用VSCode API获取代码补全
     const completionList = await vscode.commands.executeCommand<vscode.CompletionList>(
       'vscode.executeCompletionItemProvider',
       document.uri,
       position,
       undefined,
-      30, // 限制数量，避免返回过多
+      30,
     )
 
-    return completionList
+    return formatCompletions(completionList)
   }
   catch (error) {
-    logger.error('获取代码补全失败', error)
+    logger.error('Failed to get completions', error)
     throw error
   }
 }
