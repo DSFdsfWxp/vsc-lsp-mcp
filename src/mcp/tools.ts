@@ -3,9 +3,16 @@ import { z } from 'zod'
 import {
   getClassFileContents,
   getCompletions,
+  getDeclarations,
   getDefinition,
+  getDocumentSymbols,
   getHover,
+  getImplementations,
+  getIncomingCalls,
+  getOutgoingCalls,
   getReferences,
+  getWorkspaceSymbols,
+  prepareCallHierarchy,
   rename,
 } from '../lsp'
 
@@ -50,6 +57,40 @@ export function addLspTools(server: McpServer) {
   )
 
   server.registerTool(
+    'get_declaration',
+    {
+      title: 'Get Declaration',
+      description: 'Get the declaration location of a symbol.',
+      inputSchema: {
+        uri: z.string().describe(uriDesc),
+        line: z.number().describe('The line number (0-based).'),
+        character: z.number().describe('The character position (0-based).'),
+      },
+    },
+    async ({ uri, line, character }) => {
+      const result = await getDeclarations(uri, line, character)
+      return { content: [{ type: 'text', text: result }] }
+    },
+  )
+
+  server.registerTool(
+    'get_implementation',
+    {
+      title: 'Get Implementation',
+      description: 'Get the implementation locations of a symbol.',
+      inputSchema: {
+        uri: z.string().describe(uriDesc),
+        line: z.number().describe('The line number (0-based).'),
+        character: z.number().describe('The character position (0-based).'),
+      },
+    },
+    async ({ uri, line, character }) => {
+      const result = await getImplementations(uri, line, character)
+      return { content: [{ type: 'text', text: result }] }
+    },
+  )
+
+  server.registerTool(
     'get_hover',
     {
       title: 'Get Hover Information',
@@ -84,6 +125,36 @@ export function addLspTools(server: McpServer) {
   )
 
   server.registerTool(
+    'get_document_symbols',
+    {
+      title: 'Get Document Symbols',
+      description: 'Get the symbol outline of a document.',
+      inputSchema: {
+        uri: z.string().describe(uriDesc),
+      },
+    },
+    async ({ uri }) => {
+      const result = await getDocumentSymbols(uri)
+      return { content: [{ type: 'text', text: result }] }
+    },
+  )
+
+  server.registerTool(
+    'get_workspace_symbols',
+    {
+      title: 'Get Workspace Symbols',
+      description: 'Search for symbols across the entire workspace by query string.',
+      inputSchema: {
+        query: z.string().describe('The search query string to match against symbol names.'),
+      },
+    },
+    async ({ query }) => {
+      const result = await getWorkspaceSymbols(query)
+      return { content: [{ type: 'text', text: result }] }
+    },
+  )
+
+  server.registerTool(
     'get_class_file_contents',
     {
       title: 'Get Class File Contents',
@@ -112,6 +183,57 @@ export function addLspTools(server: McpServer) {
     },
     async ({ uri, line, character, newName }) => {
       const result = await rename(uri, line, character, newName)
+      return { content: [{ type: 'text', text: result }] }
+    },
+  )
+
+  server.registerTool(
+    'prepare_call_hierarchy',
+    {
+      title: 'Prepare Call Hierarchy',
+      description: 'Prepare call hierarchy items for a symbol at the given position.',
+      inputSchema: {
+        uri: z.string().describe(uriDesc),
+        line: z.number().describe('The line number (0-based).'),
+        character: z.number().describe('The character position (0-based).'),
+      },
+    },
+    async ({ uri, line, character }) => {
+      const result = await prepareCallHierarchy(uri, line, character)
+      return { content: [{ type: 'text', text: result }] }
+    },
+  )
+
+  server.registerTool(
+    'get_incoming_calls',
+    {
+      title: 'Get Incoming Calls',
+      description: 'Get all callers (incoming calls) for a symbol at the given position.',
+      inputSchema: {
+        uri: z.string().describe(uriDesc),
+        line: z.number().describe('The line number (0-based).'),
+        character: z.number().describe('The character position (0-based).'),
+      },
+    },
+    async ({ uri, line, character }) => {
+      const result = await getIncomingCalls(uri, line, character)
+      return { content: [{ type: 'text', text: result }] }
+    },
+  )
+
+  server.registerTool(
+    'get_outgoing_calls',
+    {
+      title: 'Get Outgoing Calls',
+      description: 'Get all callees (outgoing calls) for a symbol at the given position.',
+      inputSchema: {
+        uri: z.string().describe(uriDesc),
+        line: z.number().describe('The line number (0-based).'),
+        character: z.number().describe('The character position (0-based).'),
+      },
+    },
+    async ({ uri, line, character }) => {
+      const result = await getOutgoingCalls(uri, line, character)
       return { content: [{ type: 'text', text: result }] }
     },
   )
