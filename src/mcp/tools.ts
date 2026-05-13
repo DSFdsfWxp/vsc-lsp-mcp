@@ -32,11 +32,10 @@ const ops = [
   'outgoing_calls',
 ] as const
 
-const uriDesc = `File URI in encoded format:
-- Windows: "file:///c%3A/path/to/file.ts" (drive letter + colon encoded as "%3A")
-- Unix: "file:///home/user/file.ts"
-Must start with "file:///" with URI-encoded special chars.
-For "class_file_contents", use jdt:// URI instead.`
+const uriDesc = `URI or absolute file path.
+- Plain path (no scheme): treated as absolute file path on disk, e.g. "/home/user/file.ts" or "C:/path/to/file.ts". Recommended for all file operations.
+- URI with scheme (e.g. file://, jdt://): parsed directly. Scheme part is case-insensitive, path requires proper percent-encoding. Do NOT construct file:// URIs manually.
+- For "class_file_contents": must be a jdt:// URI (scheme "jdt:").`
 
 const toolDesc = `Execute an LSP operation.
 Operations:
@@ -48,7 +47,7 @@ Operations:
 - references: Find all references of symbol at position
 - document_symbols: Get symbol outline of the file (line/char ignored, pass any value)
 - workspace_symbols: Search symbols across workspace by query (uri/line/char ignored, pass any value)
-- class_file_contents: Decompile class from jdt:// URI (line/char ignored, pass any value; uri must be jdt://, see uriDesc)
+- class_file_contents: Get decompiled source code of a Java class file via jdt:// URI. Use this to retrieve the source of library/dependency classes that jdtls references. The jdt:// URI is typically obtained from definition or hover results. (line/char ignored, pass any value; uri must be jdt://)
 - rename: Rename symbol across workspace (requires newName)
 - symbol_at_position: Get symbol metadata (name, kind, range, file) at position
 - incoming_calls: Get all callers of symbol at position
