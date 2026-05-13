@@ -16,224 +16,104 @@ import {
   rename,
 } from '../lsp'
 
-const uriDesc = `The file URI in encoded format:
-- Windows: "file:///c%3A/path/to/file.ts" (drive letter and colon, ":" encoded as "%3A")
-- Unix-like: "file:///home/user/file.ts"
-Must start with "file:///" and have special characters URI-encoded`
+const ops = [
+  'completions',
+  'definition',
+  'declaration',
+  'implementation',
+  'hover',
+  'references',
+  'document_symbols',
+  'workspace_symbols',
+  'class_file_contents',
+  'rename',
+  'prepare_call_hierarchy',
+  'incoming_calls',
+  'outgoing_calls',
+] as const
+
+const uriDesc = `File URI in encoded format:
+- Windows: "file:///c%3A/path/to/file.ts" (drive letter + colon encoded as "%3A")
+- Unix: "file:///home/user/file.ts"
+Must start with "file:///" with URI-encoded special chars.
+For "class_file_contents", use jdt:// URI instead.`
+
+const toolDesc = `Execute an LSP operation.
+Operations:
+- completions: Code completion at position
+- definition: Get definition of symbol at position
+- declaration: Get declaration of symbol at position
+- implementation: Get implementation of symbol at position
+- hover: Get hover documentation at position
+- references: Find all references of symbol at position
+- document_symbols: Get symbol outline of the file (line/char ignored, pass any value)
+- workspace_symbols: Search symbols across workspace by query (uri/line/char ignored, pass any value)
+- class_file_contents: Decompile class from jdt:// URI (line/char ignored, pass any value; uri must be jdt://, see uriDesc)
+- rename: Rename symbol across workspace (requires newName)
+- prepare_call_hierarchy: Get call hierarchy item at position
+- incoming_calls: Get all callers of symbol at position
+- outgoing_calls: Get all callees of symbol at position`
 
 export function addLspTools(server: McpServer) {
   server.registerTool(
-    'get_completions',
+    'execute_lsp',
     {
-      title: 'Get Code Completions',
-      description: 'Get code completion suggestions for a given position in a document.',
+      title: 'Execute LSP Operation',
+      description: toolDesc,
       inputSchema: {
+        operation: z.enum(ops).describe(`Which LSP operation to execute.`),
         uri: z.string().describe(uriDesc),
         line: z.number().describe('The line number (0-based).'),
         character: z.number().describe('The character position (0-based).'),
+        newName: z.string().optional().describe('New symbol name. Required only for "rename".'),
+        query: z.string().optional().describe('Search query. Required only for "workspace_symbols".'),
       },
     },
-    async ({ uri, line, character }) => {
-      const result = await getCompletions(uri, line, character)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
+    async ({ operation, uri, line, character, newName, query }) => {
+      let result: string
 
-  server.registerTool(
-    'get_definition',
-    {
-      title: 'Get Definition',
-      description: 'Get the definition location of a symbol.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
-      },
-    },
-    async ({ uri, line, character }) => {
-      const result = await getDefinition(uri, line, character)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
+      switch (operation) {
+        case 'completions':
+          result = await getCompletions(uri, line, character)
+          break
+        case 'definition':
+          result = await getDefinition(uri, line, character)
+          break
+        case 'declaration':
+          result = await getDeclarations(uri, line, character)
+          break
+        case 'implementation':
+          result = await getImplementations(uri, line, character)
+          break
+        case 'hover':
+          result = await getHover(uri, line, character)
+          break
+        case 'references':
+          result = await getReferences(uri, line, character)
+          break
+        case 'document_symbols':
+          result = await getDocumentSymbols(uri)
+          break
+        case 'workspace_symbols':
+          result = await getWorkspaceSymbols(query!)
+          break
+        case 'class_file_contents':
+          result = await getClassFileContents(uri)
+          break
+        case 'rename':
+          result = await rename(uri, line, character, newName!)
+          break
+        case 'prepare_call_hierarchy':
+          result = await prepareCallHierarchy(uri, line, character)
+          break
+        case 'incoming_calls':
+          result = await getIncomingCalls(uri, line, character)
+          break
+        case 'outgoing_calls':
+          result = await getOutgoingCalls(uri, line, character)
+          break
+      }
 
-  server.registerTool(
-    'get_declaration',
-    {
-      title: 'Get Declaration',
-      description: 'Get the declaration location of a symbol.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
-      },
-    },
-    async ({ uri, line, character }) => {
-      const result = await getDeclarations(uri, line, character)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'get_implementation',
-    {
-      title: 'Get Implementation',
-      description: 'Get the implementation locations of a symbol.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
-      },
-    },
-    async ({ uri, line, character }) => {
-      const result = await getImplementations(uri, line, character)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'get_hover',
-    {
-      title: 'Get Hover Information',
-      description: 'Get hover information for a symbol at a given position.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
-      },
-    },
-    async ({ uri, line, character }) => {
-      const result = await getHover(uri, line, character)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'get_references',
-    {
-      title: 'Get References',
-      description: 'Find all references to a symbol.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
-      },
-    },
-    async ({ uri, line, character }) => {
-      const result = await getReferences(uri, line, character)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'get_document_symbols',
-    {
-      title: 'Get Document Symbols',
-      description: 'Get the symbol outline of a document.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-      },
-    },
-    async ({ uri }) => {
-      const result = await getDocumentSymbols(uri)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'get_workspace_symbols',
-    {
-      title: 'Get Workspace Symbols',
-      description: 'Search for symbols across the entire workspace by query string.',
-      inputSchema: {
-        query: z.string().describe('The search query string to match against symbol names.'),
-      },
-    },
-    async ({ query }) => {
-      const result = await getWorkspaceSymbols(query)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'get_class_file_contents',
-    {
-      title: 'Get Class File Contents',
-      description: 'Get decompiled source code of a Java class file via jdt:// URI. Use this to retrieve the source of library/dependency classes that jdtls references. The jdt:// URI is typically obtained from definition or hover results.',
-      inputSchema: {
-        uri: z.string().describe('The jdt:// URI of the class file. Typically obtained from go-to-definition results pointing to dependency classes.'),
-      },
-    },
-    async ({ uri }) => {
-      const result = await getClassFileContents(uri)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'rename_symbol',
-    {
-      title: 'Rename Symbol',
-      description: 'Rename a symbol across the workspace.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
-        newName: z.string().describe('The new name for the symbol.'),
-      },
-    },
-    async ({ uri, line, character, newName }) => {
-      const result = await rename(uri, line, character, newName)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'prepare_call_hierarchy',
-    {
-      title: 'Prepare Call Hierarchy',
-      description: 'Prepare call hierarchy items for a symbol at the given position.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
-      },
-    },
-    async ({ uri, line, character }) => {
-      const result = await prepareCallHierarchy(uri, line, character)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'get_incoming_calls',
-    {
-      title: 'Get Incoming Calls',
-      description: 'Get all callers (incoming calls) for a symbol at the given position.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
-      },
-    },
-    async ({ uri, line, character }) => {
-      const result = await getIncomingCalls(uri, line, character)
-      return { content: [{ type: 'text', text: result }] }
-    },
-  )
-
-  server.registerTool(
-    'get_outgoing_calls',
-    {
-      title: 'Get Outgoing Calls',
-      description: 'Get all callees (outgoing calls) for a symbol at the given position.',
-      inputSchema: {
-        uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
-      },
-    },
-    async ({ uri, line, character }) => {
-      const result = await getOutgoingCalls(uri, line, character)
       return { content: [{ type: 'text', text: result }] }
     },
   )
