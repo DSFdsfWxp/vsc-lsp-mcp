@@ -23,7 +23,7 @@ const symbolKindNames = generateEnumNameMap(vscode.SymbolKind)
  * @param range - VSCode Range
  * @returns Plain object with start/end line and character
  */
-function formatRange(range: vscode.Range): any {
+function formatRange(range: vscode.Range): {start: any, end: any} {
   return {
     start: { line: range.start.line, character: range.start.character },
     end: { line: range.end.line, character: range.end.character },
@@ -111,10 +111,9 @@ export function formatHover(hovers: vscode.Hover[]): string {
   }
 
   return JSON.stringify(
-    hovers.map((hover) => ({
-      range: hover.range ? formatRange(hover.range) : undefined,
-      contents: hover.contents.map(extractContentText).filter(Boolean),
-    })),
+    hovers.map((hover) => 
+      hover.contents.map(extractContentText).filter(Boolean).join('\n\n').trim(),
+    ),
   )
 }
 
@@ -273,7 +272,7 @@ function flattenCallHierarchyItem(item: vscode.CallHierarchyItem): Record<string
     detail: item.detail || undefined,
     file: getFile(item.uri),
     range: formatRange(item.range),
-    selectionRange: formatRange(item.selectionRange),
+    namePosition: formatRange(item.selectionRange).start,
   }
 }
 

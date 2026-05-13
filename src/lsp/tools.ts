@@ -10,7 +10,7 @@ import { logger } from '../utils/logger'
  * @returns VSCode Uri
  */
 function resolveUri(input: string): vscode.Uri {
-  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(input)) {
+ if (/^(file|jdt):\/\//.test(input)) {
     return vscode.Uri.parse(input)
   }
   return vscode.Uri.file(input)
