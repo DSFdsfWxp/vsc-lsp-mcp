@@ -18,15 +18,15 @@ const kindNames = generateEnumNameMap(vscode.CompletionItemKind)
 const symbolKindNames = generateEnumNameMap(vscode.SymbolKind)
 
 /**
- * Convert a VSCode Range to a plain object
+ * Convert a VSCode Range to a compact string pair
  *
  * @param range - VSCode Range
- * @returns Plain object with start/end line and character
+ * @returns Object with "line:char" strings for start and end
  */
-function formatRange(range: vscode.Range): {start: any, end: any} {
+function formatRange(range: vscode.Range): { start: string; end: string } {
   return {
-    start: { line: range.start.line, character: range.start.character },
-    end: { line: range.end.line, character: range.end.character },
+    start: `${range.start.line}:${range.start.character}`,
+    end: `${range.end.line}:${range.end.character}`,
   }
 }
 
@@ -99,8 +99,8 @@ function flattenLabel(label: string | vscode.CompletionItemLabel): string {
 
 /**
  * Format Hover[] into a clean JSON string.
- * Keeps: content text, source range.
- * Strips: MarkdownString/MarkedString type wrappers.
+ * Keeps: content text.
+ * Strips: range, MarkdownString/MarkedString type wrappers.
  *
  * @param hovers - List of hover data
  * @returns JSON string
@@ -141,6 +141,7 @@ export function formatCompletions(list: vscode.CompletionList): string {
 
 /**
  * Format Location[] into a clean JSON string.
+ * Keeps: file, range (start + end).
  *
  * @param locations - List of locations
  * @returns JSON string
@@ -154,7 +155,8 @@ export function formatLocations(locations: vscode.Location[]): string {
 
 /**
  * Format Location | Location[] | LocationLink[] into a clean JSON string.
- * For LocationLink, keeps target file/range and origin selection range.
+ * Keeps: file, target range, origin selection range (LocationLink only).
+ * Strips: targetSelectionRange (LocationLink).
  *
  * @param items - A single Location, Location array, or LocationLink array
  * @returns JSON string
@@ -202,6 +204,8 @@ export function formatClassFile(text: string): string {
 
 /**
  * Recursively flatten a symbol (SymbolInformation or DocumentSymbol) into a plain object
+ * Keeps: name, kind, containerName, range, detail, children, namePosition (DocumentSymbol).
+ * Strips: tags, file (SymbolInformation — file is implicit from the queried document).
  *
  * @param symbol - A DocumentSymbol or SymbolInformation instance
  * @returns Plain object with name, kind, location info, and optional children
@@ -213,13 +217,14 @@ function flattenSymbol(symbol: vscode.SymbolInformation | vscode.DocumentSymbol)
   }
 
   if ('location' in symbol) {
-    Object.assign(base, flattenLocation(symbol.location))
+    base.range = formatRange(symbol.location.range)
     if (symbol.containerName) base.containerName = symbol.containerName
   }
 
   if ('detail' in symbol) {
     if (symbol.detail) base.detail = symbol.detail
     base.range = formatRange(symbol.range)
+    base.namePosition = formatRange(symbol.selectionRange).start
   }
 
   if ('children' in symbol && symbol.children.length > 0) {
@@ -231,6 +236,7 @@ function flattenSymbol(symbol: vscode.SymbolInformation | vscode.DocumentSymbol)
 
 /**
  * Format DocumentSymbol[] / SymbolInformation[] into a clean JSON string.
+ * Strips: file (file is implicit from the queried document), tags.
  *
  * @param symbols - Array of DocumentSymbol or SymbolInformation
  * @returns JSON string
@@ -242,6 +248,8 @@ export function formatDocumentSymbols(symbols: (vscode.SymbolInformation | vscod
 
 /**
  * Format SymbolInformation[] from workspace symbol provider into a clean JSON string.
+ * Keeps: name, kind, containerName, file, range.
+ * Strips: tags.
  *
  * @param symbols - Array of SymbolInformation
  * @returns JSON string
@@ -261,9 +269,11 @@ export function formatWorkspaceSymbols(symbols: vscode.SymbolInformation[]): str
 
 /**
  * Flatten a CallHierarchyItem into a plain object
+ * Keeps: name, kind, detail, file, range, namePosition.
+ * Strips: tags.
  *
  * @param item - VSCode CallHierarchyItem
- * @returns Plain object with name, kind, detail, file, range, selectionRange
+ * @returns Plain object with name, kind, detail, file, range, namePosition
  */
 function flattenCallHierarchyItem(item: vscode.CallHierarchyItem): Record<string, any> {
   return {
@@ -278,6 +288,7 @@ function flattenCallHierarchyItem(item: vscode.CallHierarchyItem): Record<string
 
 /**
  * Format CallHierarchyItem[] into a clean JSON string.
+ * Strips: tags.
  *
  * @param items - Array of CallHierarchyItem
  * @returns JSON string
@@ -302,6 +313,7 @@ function flattenIncomingCall(call: vscode.CallHierarchyIncomingCall): Record<str
 
 /**
  * Format CallHierarchyIncomingCall[] into a clean JSON string.
+ * Each entry: caller (flattened CallHierarchyItem), callSites.
  *
  * @param calls - Array of incoming calls
  * @returns JSON string
@@ -326,6 +338,7 @@ function flattenOutgoingCall(call: vscode.CallHierarchyOutgoingCall): Record<str
 
 /**
  * Format CallHierarchyOutgoingCall[] into a clean JSON string.
+ * Each entry: callee (flattened CallHierarchyItem), callSites.
  *
  * @param calls - Array of outgoing calls
  * @returns JSON string

@@ -45,9 +45,9 @@ Operations:
 - implementation: Get implementation of symbol at position
 - hover: Get hover documentation at position
 - references: Find all references of symbol at position
-- document_symbols: Get symbol outline of the file (line/char ignored, pass any value)
-- workspace_symbols: Search symbols across workspace by query (uri/line/char ignored, pass any value)
-- class_file_contents: Get decompiled source code of a Java class file via jdt:// URI. Use this to retrieve the source of library/dependency classes that jdtls references. The jdt:// URI is typically obtained from definition or hover results. (line/char ignored, pass any value; uri must be jdt://)
+- document_symbols: Get symbol outline of the file (position ignored, pass e.g. "0:0")
+- workspace_symbols: Search symbols across workspace by query (uri/position ignored, pass any value)
+- class_file_contents: Get decompiled source code of a Java class file via jdt:// URI. Use this to retrieve the source of library/dependency classes that jdtls references. The jdt:// URI is typically obtained from definition or hover results. (position ignored, pass e.g. "0:0"; uri must be jdt://)
 - rename: Rename symbol across workspace (requires newName)
 - symbol_at_position: Get symbol metadata (name, kind, range, file) at position
 - incoming_calls: Get all callers of symbol at position
@@ -62,13 +62,13 @@ export function addLspTools(server: McpServer) {
       inputSchema: {
         operation: z.enum(ops).describe(`Which LSP operation to execute.`),
         uri: z.string().describe(uriDesc),
-        line: z.number().describe('The line number (0-based).'),
-        character: z.number().describe('The character position (0-based).'),
+        position: z.string().describe('Line:character (both 0-based), e.g. "42:5".'),
         newName: z.string().optional().describe('New symbol name. Required only for "rename".'),
         query: z.string().optional().describe('Search query. Required only for "workspace_symbols".'),
       },
     },
-    async ({ operation, uri, line, character, newName, query }) => {
+    async ({ operation, uri, position, newName, query }) => {
+      const [line, character] = position.split(':').map(Number)
       let result: string
 
       switch (operation) {
