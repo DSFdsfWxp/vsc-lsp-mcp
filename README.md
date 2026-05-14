@@ -43,19 +43,34 @@ This extension bridges that gap, providing AI tools with the same code intellige
 
 - 🔄 **LSP Bridge**: Converts LSP features into MCP tools
 - 🔌 **Multi-Instance Support**: Automatically handles port conflicts for multiple VSCode windows
-- 🧠 **Rich Code Context**: Provides accurate symbol information through LSP
+- 🧠 **16 LSP operations** covering navigation (definition, declaration, implementation, references), documentation (hover, completions), structure (document/workspace symbols, call hierarchy), and manipulation (rename)
 - ☕ **Java dependency source**: Get decompiled Java class source via jdt:// URI (from jdtls), so AI can read library implementations
+- 📄 **Dual output format**: JSON for machine processing, Markdown for LLM-friendly reading
 
 ## 🛠️ Exposed MCP Tools
 
-| Tool | Description |
-|------|-------------|
-| `get_hover` | Get hover information for symbols |
-| `get_definition` | Find symbol definitions |
-| `get_completions` | Get intelligent code completions |
-| `get_references` | Find all references to a symbol |
-| `get_class_file_contents` | Get decompiled Java class source via jdt:// URI (e.g. from `get_definition` when the target is in a dependency JAR) |
-| `rename_symbol` | Rename symbols across files |
+| Operation | Description |
+|-----------|-------------|
+| `hover` | Get hover information (documentation, type, etc.) at a position |
+| `definition` | Get the definition location of a symbol |
+| `declaration` | Get the declaration location of a symbol |
+| `implementation` | Get the implementation location(s) of a symbol |
+| `references` | Find all references to a symbol |
+| `completions` | Get intelligent code completion suggestions |
+| `document_symbols` | Get the symbol outline (tree) of a document |
+| `workspace_symbols` | Search for symbols across the entire workspace by query |
+| `class_file_contents` | Get decompiled Java class source via jdt:// URI (from jdtls), to read library/dependency implementations |
+| `rename` | Rename a symbol across the workspace |
+| `symbol_at_position` | Get symbol metadata (name, kind, range) at a position |
+| `incoming_calls` | Find all callers of a symbol |
+| `outgoing_calls` | Find all callees (calls made by) a symbol |
+
+All operations are invoked through the single `execute_lsp` MCP tool with a unified input format:
+- `operation` — which LSP operation to execute
+- `uri` — file path or URI string (supports both plain paths and `file://`/`jdt://` URIs)
+- `position` — `line:character` (0-based)
+- `newName` — required only for `rename`
+- `query` — required only for `workspace_symbols`
 
 ## 📋 Configuration
 
@@ -70,7 +85,8 @@ This extension bridges that gap, providing AI tools with the same code intellige
 | `lsp-mcp.cors.allowOrigins`   | Allowed origins for CORS. Use `*` to allow all origins, or provide a comma-separated list of origins (e.g., `http://localhost:3000,http://localhost:5173`). | `string`  | `*`     |
 | `lsp-mcp.cors.withCredentials` | Whether to allow credentials (cookies, authorization headers) in CORS requests.                                                                       | `boolean` | `false` |
 | `lsp-mcp.cors.exposeHeaders`   | Headers that browsers are allowed to access. Provide a comma-separated list of headers (e.g., `Mcp-Session-Id`).                      | `string`  | `Mcp-Session-Id` |
-
+| `lsp-mcp.outputFormat`         | Output format for LSP operation results. `json` for machine-readable JSON, `markdown` for LLM-friendly Markdown.                     | `string`  | `json` |
+ 
 <!-- configs -->
 
 ## 🔗 Integration with AI Tools
