@@ -34,8 +34,13 @@ export class MarkdownFormatter implements Formatter {
     if (locations.length === 0) {
       return '## Locations\n\nNo locations found.'
     }
-    const lines = locations.map((loc) =>
-      `- \`${loc.file}\`: line ${loc.range}`,
+    const grouped: Record<string, string[]> = {}
+    for (const loc of locations) {
+      if (!grouped[loc.file]) grouped[loc.file] = []
+      grouped[loc.file].push(loc.range)
+    }
+    const lines = Object.entries(grouped).map(([file, ranges]) =>
+      `- \`${file}\`: ${ranges.map(r => `line ${r}`).join(', ')}`,
     )
     return '## Locations\n\n' + lines.join('\n')
   }
@@ -57,41 +62,81 @@ export class MarkdownFormatter implements Formatter {
 
   formatWorkspaceSymbols(symbols: Record<string, any>[]): string {
     if (symbols.length === 0) return '## Workspace Symbols\n\nNo symbols found.'
-    const lines = symbols.map((s) => {
-      const parts: string[] = [`\`${s.file}\` line ${s.range}`]
-      if (s.containerName) parts.push(`nested in \`${s.containerName}\``)
-      return `- \`${s.name}\` (${s.kind}): ${parts.join(', ')}`
+    const grouped: Record<string, any[]> = {}
+    for (const s of symbols) {
+      const { file, ...rest } = s
+      if (!file) continue
+      if (!grouped[file]) grouped[file] = []
+      grouped[file].push(rest)
+    }
+    const lines = Object.entries(grouped).flatMap(([file, items]) => {
+      const itemLines = items.map((item) => {
+        const parts: string[] = [`line ${item.range}`]
+        if (item.containerName) parts.push(`nested in \`${item.containerName}\``)
+        return `  - \`${item.name}\` (${item.kind}): ${parts.join(', ')}`
+      })
+      return [`\`${file}\``, ...itemLines]
     })
     return '## Workspace Symbols\n\n' + lines.join('\n')
   }
 
   formatCallHierarchyItems(items: Record<string, any>[]): string {
     if (items.length === 0) return '## Call Hierarchy\n\nNo items found.'
-    const lines = items.map((item) => {
-      const parts: string[] = [`\`${item.file}\` line ${item.range}`]
-      if (item.namePosition) parts.push(`name at ${item.namePosition}`)
-      if (item.detail) parts.push(`detail: ${item.detail}`)
-      return `- \`${item.name}\` (${item.kind}): ${parts.join(', ')}`
+    const grouped: Record<string, any[]> = {}
+    for (const item of items) {
+      const { file, ...rest } = item
+      if (!file) continue
+      if (!grouped[file]) grouped[file] = []
+      grouped[file].push(rest)
+    }
+    const lines = Object.entries(grouped).flatMap(([file, items]) => {
+      const itemLines = items.map((item) => {
+        const parts: string[] = [`line ${item.range}`]
+        if (item.namePosition) parts.push(`name at ${item.namePosition}`)
+        if (item.detail) parts.push(`detail: ${item.detail}`)
+        return `  - \`${item.name}\` (${item.kind}): ${parts.join(', ')}`
+      })
+      return [`\`${file}\``, ...itemLines]
     })
     return '## Call Hierarchy\n\n' + lines.join('\n')
   }
 
   formatIncomingCalls(calls: Record<string, any>[]): string {
     if (calls.length === 0) return '## Incoming Calls\n\nNo incoming calls found.'
-    const lines = calls.map((call) => {
-      const parts: string[] = [`\`${call.caller.file}\` line ${call.caller.range}`]
-      if (call.callSites?.length) parts.push(`called at: ${call.callSites.join(', ')}`)
-      return `- \`${call.caller.name}\` (${call.caller.kind}): ${parts.join(', ')}`
+    const grouped: Record<string, any[]> = {}
+    for (const call of calls) {
+      const file = call.caller?.file
+      if (!file) continue
+      if (!grouped[file]) grouped[file] = []
+      grouped[file].push(call)
+    }
+    const lines = Object.entries(grouped).flatMap(([file, items]) => {
+      const itemLines = items.map((call) => {
+        const parts: string[] = [`line ${call.caller.range}`]
+        if (call.callSites?.length) parts.push(`called at: ${call.callSites.join(', ')}`)
+        return `  - \`${call.caller.name}\` (${call.caller.kind}): ${parts.join(', ')}`
+      })
+      return [`\`${file}\``, ...itemLines]
     })
     return '## Incoming Calls\n\n' + lines.join('\n')
   }
 
   formatOutgoingCalls(calls: Record<string, any>[]): string {
-    if (calls.length === 0) return '## Outgoing Calls\n\nNo outgoing calls found.'
-    const lines = calls.map((call) => {
-      const parts: string[] = [`\`${call.callee.file}\` line ${call.callee.range}`]
-      if (call.callSites?.length) parts.push(`called at: ${call.callSites.join(', ')}`)
-      return `- \`${call.callee.name}\` (${call.callee.kind}): ${parts.join(', ')}`
+    if (calls.length === 0) return '## Outgoing Calls\n\nNo outgoing calls found or operation not supported.'
+    const grouped: Record<string, any[]> = {}
+    for (const call of calls) {
+      const file = call.callee?.file
+      if (!file) continue
+      if (!grouped[file]) grouped[file] = []
+      grouped[file].push(call)
+    }
+    const lines = Object.entries(grouped).flatMap(([file, items]) => {
+      const itemLines = items.map((call) => {
+        const parts: string[] = [`line ${call.callee.range}`]
+        if (call.callSites?.length) parts.push(`called at: ${call.callSites.join(', ')}`)
+        return `  - \`${call.callee.name}\` (${call.callee.kind}): ${parts.join(', ')}`
+      })
+      return [`\`${file}\``, ...itemLines]
     })
     return '## Outgoing Calls\n\n' + lines.join('\n')
   }
