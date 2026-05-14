@@ -1,15 +1,16 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
 import { getDocument } from './tools'
-import { formatDocumentSymbols } from './formatter'
 
 /**
- * Get document symbols (outline) for a file, returned as a JSON string.
+ * Get document symbols (outline) for a file.
  *
  * @param uri - The document URI
- * @returns JSON string of document symbols
+ * @returns Raw VSCode SymbolInformation[] or DocumentSymbol[]
  */
-export async function getDocumentSymbols(uri: string): Promise<string> {
+export async function getDocumentSymbols(
+  uri: string,
+): Promise<(vscode.SymbolInformation | vscode.DocumentSymbol)[]> {
   try {
     const document = await getDocument(uri)
     if (!document) {
@@ -25,7 +26,7 @@ export async function getDocumentSymbols(uri: string): Promise<string> {
       document.uri,
     )
 
-    return formatDocumentSymbols(symbols || [])
+    return symbols || []
   }
   catch (error) {
     logger.error('Failed to get document symbols', error)

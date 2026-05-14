@@ -1,21 +1,20 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
 import { getDocument } from './tools'
-import { formatCallHierarchyItems, formatIncomingCalls, formatOutgoingCalls } from './formatter'
 
 /**
- * Prepare call hierarchy at a given position, returned as a JSON string.
+ * Prepare call hierarchy at a given position.
  *
  * @param uri - The document URI
  * @param line - Line number (0-based)
  * @param character - Character offset (0-based)
- * @returns JSON string of call hierarchy items
+ * @returns Raw VSCode CallHierarchyItem or array
  */
 export async function prepareCallHierarchy(
   uri: string,
   line: number,
   character: number,
-): Promise<string> {
+): Promise<vscode.CallHierarchyItem | readonly vscode.CallHierarchyItem[]> {
   try {
     const document = await getDocument(uri)
     if (!document) {
@@ -26,19 +25,13 @@ export async function prepareCallHierarchy(
 
     logger.info(`Preparing call hierarchy: ${uri} line:${line} col:${character}`)
 
-    const items = await vscode.commands.executeCommand<
+    return await vscode.commands.executeCommand<
       vscode.CallHierarchyItem | vscode.CallHierarchyItem[]
     >(
       'vscode.prepareCallHierarchy',
       document.uri,
       position,
     )
-
-    if (!items) {
-      return JSON.stringify([])
-    }
-
-    return formatCallHierarchyItems(Array.isArray(items) ? items : [items])
   }
   catch (error) {
     logger.error('Failed to prepare call hierarchy', error)
@@ -47,19 +40,19 @@ export async function prepareCallHierarchy(
 }
 
 /**
- * Get incoming calls (callers) for a symbol at a given position, returned as a JSON string.
+ * Get incoming calls (callers) for a symbol at a given position.
  * Internally calls prepareCallHierarchy first, then provideIncomingCalls for each item.
  *
  * @param uri - The document URI
  * @param line - Line number (0-based)
  * @param character - Character offset (0-based)
- * @returns JSON string of incoming calls
+ * @returns Raw VSCode CallHierarchyIncomingCall array
  */
 export async function getIncomingCalls(
   uri: string,
   line: number,
   character: number,
-): Promise<string> {
+): Promise<vscode.CallHierarchyIncomingCall[]> {
   try {
     const document = await getDocument(uri)
     if (!document) {
@@ -79,7 +72,7 @@ export async function getIncomingCalls(
     )
 
     if (!items) {
-      return JSON.stringify([])
+      return []
     }
 
     const itemList = Array.isArray(items) ? items : [items]
@@ -95,7 +88,7 @@ export async function getIncomingCalls(
       }
     }
 
-    return formatIncomingCalls(allCalls)
+    return allCalls
   }
   catch (error) {
     logger.error('Failed to get incoming calls', error)
@@ -104,19 +97,19 @@ export async function getIncomingCalls(
 }
 
 /**
- * Get outgoing calls (callees) for a symbol at a given position, returned as a JSON string.
+ * Get outgoing calls (callees) for a symbol at a given position.
  * Internally calls prepareCallHierarchy first, then provideOutgoingCalls for each item.
  *
  * @param uri - The document URI
  * @param line - Line number (0-based)
  * @param character - Character offset (0-based)
- * @returns JSON string of outgoing calls
+ * @returns Raw VSCode CallHierarchyOutgoingCall array
  */
 export async function getOutgoingCalls(
   uri: string,
   line: number,
   character: number,
-): Promise<string> {
+): Promise<vscode.CallHierarchyOutgoingCall[]> {
   try {
     const document = await getDocument(uri)
     if (!document) {
@@ -136,7 +129,7 @@ export async function getOutgoingCalls(
     )
 
     if (!items) {
-      return JSON.stringify([])
+      return []
     }
 
     const itemList = Array.isArray(items) ? items : [items]
@@ -152,7 +145,7 @@ export async function getOutgoingCalls(
       }
     }
 
-    return formatOutgoingCalls(allCalls)
+    return allCalls
   }
   catch (error) {
     logger.error('Failed to get outgoing calls', error)

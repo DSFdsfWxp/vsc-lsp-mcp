@@ -15,6 +15,7 @@ import {
   prepareCallHierarchy,
   rename,
 } from '../lsp'
+import { transform } from '../transform'
 
 const ops = [
   'completions',
@@ -73,43 +74,48 @@ export function addLspTools(server: McpServer) {
 
       switch (operation) {
         case 'completions':
-          result = await getCompletions(uri, line, character)
+          result = transform.formatCompletions(await getCompletions(uri, line, character))
           break
         case 'definition':
-          result = await getDefinition(uri, line, character)
+          result = transform.formatLocationsOrLinks(await getDefinition(uri, line, character))
           break
         case 'declaration':
-          result = await getDeclarations(uri, line, character)
+          result = transform.formatLocationsOrLinks(await getDeclarations(uri, line, character))
           break
         case 'implementation':
-          result = await getImplementations(uri, line, character)
+          result = transform.formatLocationsOrLinks(await getImplementations(uri, line, character))
           break
         case 'hover':
-          result = await getHover(uri, line, character)
+          result = transform.formatHover(await getHover(uri, line, character))
           break
         case 'references':
-          result = await getReferences(uri, line, character)
+          result = transform.formatLocations(await getReferences(uri, line, character))
           break
         case 'document_symbols':
-          result = await getDocumentSymbols(uri)
+          result = transform.formatDocumentSymbols(await getDocumentSymbols(uri))
           break
         case 'workspace_symbols':
-          result = await getWorkspaceSymbols(query!)
+          result = await transform.formatWorkspaceSymbols(await getWorkspaceSymbols(query!))
           break
         case 'class_file_contents':
-          result = await getClassFileContents(uri)
+          result = transform.formatClassFile(await getClassFileContents(uri))
           break
-        case 'rename':
-          result = await rename(uri, line, character, newName!)
+        case 'rename': {
+          const edit = await rename(uri, line, character, newName!)
+          result = transform.formatRename(edit, newName!)
           break
-        case 'symbol_at_position':
-          result = await prepareCallHierarchy(uri, line, character)
+        }
+        case 'symbol_at_position': {
+          const rawItems = await prepareCallHierarchy(uri, line, character)
+          const items = !rawItems ? [] : (Array.isArray(rawItems) ? rawItems : [rawItems])
+          result = transform.formatCallHierarchyItems(items)
           break
+        }
         case 'incoming_calls':
-          result = await getIncomingCalls(uri, line, character)
+          result = transform.formatIncomingCalls(await getIncomingCalls(uri, line, character))
           break
         case 'outgoing_calls':
-          result = await getOutgoingCalls(uri, line, character)
+          result = transform.formatOutgoingCalls(await getOutgoingCalls(uri, line, character))
           break
       }
 

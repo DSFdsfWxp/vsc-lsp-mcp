@@ -1,21 +1,20 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
 import { getDocument } from './tools'
-import { formatLocations, formatLocationsOrLinks } from './formatter'
 
 /**
- * Get the definition location of a symbol, returned as a JSON string.
+ * Get the definition location of a symbol.
  *
  * @param uri - The document URI
  * @param line - Line number (0-based)
  * @param character - Character offset (0-based)
- * @returns JSON string of definition locations
+ * @returns Raw VSCode Location / Location[] / LocationLink[]
  */
 export async function getDefinition(
   uri: string,
   line: number,
   character: number,
-): Promise<string> {
+): Promise<vscode.Location | vscode.Location[] | vscode.LocationLink[]> {
   try {
     const document = await getDocument(uri)
     if (!document) {
@@ -26,17 +25,13 @@ export async function getDefinition(
 
     logger.info(`Getting definition: ${uri} line:${line} col:${character}`)
 
-    const definitions = await vscode.commands.executeCommand<
+    return await vscode.commands.executeCommand<
       vscode.Location | vscode.Location[] | vscode.LocationLink[]
     >(
       'vscode.executeDefinitionProvider',
       document.uri,
       position,
     )
-
-    console.log('pass', definitions)
-
-    return formatLocationsOrLinks(definitions)
   }
   catch (error) {
     logger.error('Failed to get definition', error)

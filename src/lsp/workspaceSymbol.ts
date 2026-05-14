@@ -1,14 +1,15 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
-import { formatWorkspaceSymbols } from './formatter'
 
 /**
- * Search for symbols across the entire workspace, returned as a JSON string.
+ * Search for symbols across the entire workspace.
  *
  * @param query - Search query string
- * @returns JSON string of matching workspace symbols
+ * @returns Raw VSCode SymbolInformation array
  */
-export async function getWorkspaceSymbols(query: string): Promise<string> {
+export async function getWorkspaceSymbols(
+  query: string,
+): Promise<vscode.SymbolInformation[]> {
   try {
     logger.info(`Searching workspace symbols: ${query}`)
 
@@ -17,7 +18,7 @@ export async function getWorkspaceSymbols(query: string): Promise<string> {
       query,
     )
 
-    return formatWorkspaceSymbols(symbols || [])
+    return symbols || []
   }
   catch (error) {
     logger.error('Failed to get workspace symbols', error)

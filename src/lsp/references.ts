@@ -1,21 +1,20 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
 import { getDocument } from './tools'
-import { formatLocations } from './formatter'
 
 /**
- * Find all references to a symbol, returned as a JSON string.
+ * Find all references to a symbol.
  *
  * @param uri - The document URI
  * @param line - Line number (0-based)
  * @param character - Character offset (0-based)
- * @returns JSON string of reference locations
+ * @returns Raw VSCode Location array
  */
 export async function getReferences(
   uri: string,
   line: number,
   character: number,
-): Promise<string> {
+): Promise<vscode.Location[]> {
   try {
     const document = await getDocument(uri)
     if (!document) {
@@ -32,7 +31,7 @@ export async function getReferences(
       position,
     )
 
-    return formatLocations(references || [])
+    return references || []
   }
   catch (error) {
     logger.error('Failed to get references', error)

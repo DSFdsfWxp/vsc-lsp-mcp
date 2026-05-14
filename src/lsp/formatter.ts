@@ -21,13 +21,10 @@ const symbolKindNames = generateEnumNameMap(vscode.SymbolKind)
  * Convert a VSCode Range to a compact string pair
  *
  * @param range - VSCode Range
- * @returns Object with "line:char" strings for start and end
+ * @returns string with "line:char" sub strings for start and end
  */
-function formatRange(range: vscode.Range): { start: string; end: string } {
-  return {
-    start: `${range.start.line}:${range.start.character}`,
-    end: `${range.end.line}:${range.end.character}`,
-  }
+function formatRange(range: vscode.Range): string {
+  return `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`
 }
 
 /**
@@ -63,7 +60,8 @@ function flattenLocationLink(link: vscode.LocationLink): Record<string, any> {
   return {
     file: getFile(link.targetUri),
     range: formatRange(link.targetRange),
-    ...(link.originSelectionRange ? { originSelectionRange: formatRange(link.originSelectionRange) } : {}),
+    // maybe useless
+    //...(link.originSelectionRange ? { originSelectionRange: formatRange(link.originSelectionRange) } : {}),
   }
 }
 
@@ -224,7 +222,7 @@ function flattenSymbol(symbol: vscode.SymbolInformation | vscode.DocumentSymbol)
   if ('detail' in symbol) {
     if (symbol.detail) base.detail = symbol.detail
     base.range = formatRange(symbol.range)
-    base.namePosition = formatRange(symbol.selectionRange).start
+    base.namePosition = formatRange(symbol.selectionRange).split('-')[0]
   }
 
   if ('children' in symbol && symbol.children.length > 0) {
@@ -282,7 +280,7 @@ function flattenCallHierarchyItem(item: vscode.CallHierarchyItem): Record<string
     detail: item.detail || undefined,
     file: getFile(item.uri),
     range: formatRange(item.range),
-    namePosition: formatRange(item.selectionRange).start,
+    namePosition: formatRange(item.selectionRange).split('-')[0]
   }
 }
 

@@ -26,6 +26,11 @@ export async function getDocument(uri: string): Promise<vscode.TextDocument | un
   try {
     const docUri = resolveUri(uri)
 
+    for (const doc of vscode.workspace.textDocuments) {
+      if (doc.uri.toString() === docUri.toString())
+        return doc;
+    }
+
     for (const editor of vscode.window.visibleTextEditors) {
       if (editor.document.uri.toString() === docUri.toString()) {
         return editor.document

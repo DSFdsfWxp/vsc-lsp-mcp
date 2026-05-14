@@ -1,21 +1,20 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
 import { getDocument } from './tools'
-import { formatCompletions } from './formatter'
 
 /**
- * Get code completion suggestions at a given position, returned as a JSON string.
+ * Get code completion suggestions at a given position.
  *
  * @param uri - The document URI
  * @param line - Line number (0-based)
  * @param character - Character offset (0-based)
- * @returns JSON string of completion items
+ * @returns Raw VSCode CompletionList
  */
 export async function getCompletions(
   uri: string,
   line: number,
   character: number,
-): Promise<string> {
+): Promise<vscode.CompletionList> {
   try {
     const document = await getDocument(uri)
     if (!document) {
@@ -26,7 +25,7 @@ export async function getCompletions(
 
     logger.info(`Getting completions: ${uri} line:${line} col:${character}`)
 
-    const completionList = await vscode.commands.executeCommand<vscode.CompletionList>(
+    const result = await vscode.commands.executeCommand<vscode.CompletionList>(
       'vscode.executeCompletionItemProvider',
       document.uri,
       position,
@@ -34,7 +33,7 @@ export async function getCompletions(
       30,
     )
 
-    return formatCompletions(completionList)
+    return result ?? new vscode.CompletionList([])
   }
   catch (error) {
     logger.error('Failed to get completions', error)

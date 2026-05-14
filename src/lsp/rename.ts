@@ -1,24 +1,23 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
 import { getDocument } from './tools'
-import { formatRename } from './formatter'
 
 /**
- * Rename a symbol across the workspace, returned as a JSON summary string.
+ * Rename a symbol across the workspace.
  * Does NOT list every individual edit to avoid overflowing context window.
  *
  * @param uri - The document URI
  * @param line - Line number (0-based)
  * @param character - Character offset (0-based)
  * @param newName - The new name for the symbol
- * @returns JSON string with rename summary
+ * @returns Raw VSCode WorkspaceEdit
  */
 export async function rename(
   uri: string,
   line: number,
   character: number,
   newName: string,
-): Promise<string> {
+): Promise<vscode.WorkspaceEdit> {
   try {
     const document = await getDocument(uri)
     if (!document) {
@@ -55,7 +54,7 @@ export async function rename(
 
     await vscode.workspace.applyEdit(edit)
 
-    return formatRename(edit, newName)
+    return edit
   }
   catch (error) {
     logger.error('Failed to rename symbol', error)

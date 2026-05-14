@@ -1,12 +1,11 @@
 import * as vscode from 'vscode'
 import { logger } from '../utils/logger'
-import { formatClassFile } from './formatter'
 
 /**
- * Get decompiled Java class file source via jdt:// URI, returned as a JSON string.
+ * Get decompiled Java class file source via jdt:// URI.
  *
  * @param uri - The jdt:// URI of the class file
- * @returns JSON string with language hint and source code
+ * @returns Raw source code text
  */
 export async function getClassFileContents(uri: string): Promise<string> {
   try {
@@ -17,7 +16,7 @@ export async function getClassFileContents(uri: string): Promise<string> {
     logger.info(`Getting class file contents: ${uri}`)
 
     const doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri))
-    return formatClassFile(doc.getText())
+    return doc.getText()
   }
   catch (error) {
     logger.error('Failed to get class file contents', error)
