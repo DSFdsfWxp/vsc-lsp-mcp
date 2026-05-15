@@ -68,9 +68,12 @@ This extension bridges that gap, providing AI tools with the same code intellige
 All operations are invoked through the single `execute_lsp` MCP tool with a unified input format:
 - `operation` — which LSP operation to execute
 - `uri` — file path or URI string (supports both plain paths and `file://`/`jdt://` URIs)
-- `position` — `line:character` (0-based)
+- `line` — line number (**1-based**, matching editor display). Required for position-dependent operations
+- `character` — character offset (**1-based**, matching editor display). Required for position-dependent operations
 - `newName` — required only for `rename`
 - `query` — required only for `workspace_symbols`
+
+> **1-based positions**: Both input and output use 1-based line/character values, matching what your editor displays. VS Code shows `Ln 9, Col 16` → pass `line: 9, character: 16`. Output positions can be used directly as input for the next call — no conversion needed.
 
 ## 📋 Configuration
 
@@ -85,6 +88,7 @@ All operations are invoked through the single `execute_lsp` MCP tool with a unif
 | `lsp-mcp.cors.allowOrigins`   | Allowed origins for CORS. Use `*` to allow all origins, or provide a comma-separated list of origins (e.g., `http://localhost:3000,http://localhost:5173`). | `string`  | `*`     |
 | `lsp-mcp.cors.withCredentials` | Whether to allow credentials (cookies, authorization headers) in CORS requests.                                                                       | `boolean` | `false` |
 | `lsp-mcp.cors.exposeHeaders`   | Headers that browsers are allowed to access. Provide a comma-separated list of headers (e.g., `Mcp-Session-Id`).                      | `string`  | `Mcp-Session-Id` |
+| `lsp-mcp.maxResults`           | Maximum number of items returned for list-type results (completions, workspace_symbols, etc.). Prevents excessive token usage. | `number` | `200` |
 | `lsp-mcp.outputFormat`         | Output format for LSP operation results. `json` for machine-readable JSON, `markdown` for LLM-friendly Markdown.                     | `string`  | `json` |
  
 <!-- configs -->

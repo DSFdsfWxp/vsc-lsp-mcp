@@ -68,9 +68,12 @@ VSCode LSP MCP 是一个 Visual Studio Code 扩展。**扩展 ID**：`cjl.lsp-mc
 所有操作通过单个 `execute_lsp` MCP 工具调用，输入格式统一：
 - `operation` — 要执行的 LSP 操作
 - `uri` — 文件路径或 URI（支持普通路径和 `file://`/`jdt://` URI）
-- `position` — `行号:字符偏移`（均从 0 开始）
+- `line` — 行号（**1-based**，与编辑器显示一致）。位置相关操作必填
+- `character` — 列号（**1-based**，与编辑器显示一致）。位置相关操作必填
 - `newName` — 仅 `rename` 操作需要
 - `query` — 仅 `workspace_symbols` 操作需要
+
+> **1-based 位置**：输入和输出都使用 1-based 行列值，与编辑器显示一致。VS Code 显示 `Ln 9, Col 16` → 传 `line: 9, character: 16`。输出中的位置值可直接用于下一次调用，无需任何转换。
 
 ## 📋 配置
 
@@ -85,6 +88,7 @@ VSCode LSP MCP 是一个 Visual Studio Code 扩展。**扩展 ID**：`cjl.lsp-mc
 | `lsp-mcp.cors.allowOrigins`       | 允许的 CORS 源。使用 `*` 允许所有源，或提供逗号分隔的源列表（例如 `http://localhost:3000,http://localhost:5173`） | `string`  | `*`     |
 | `lsp-mcp.cors.withCredentials`    | 是否允许在 CORS 请求中携带凭证（cookie、授权标头）                                         | `boolean` | `false` |
 | `lsp-mcp.cors.exposeHeaders`      | 允许浏览器访问的响应头。提供逗号分隔的头列表（例如 `Mcp-Session-Id`）        | `string`  | `Mcp-Session-Id` |
+| `lsp-mcp.maxResults`           | 列表类结果的最大条目数（completions、workspace_symbols 等），防止 token 溢出 | `number` | `200` |
 | `lsp-mcp.outputFormat`         | LSP 操作结果的输出格式。`json` 为机器可读 JSON，`markdown` 为 LLM 友好的 Markdown                  | `string`  | `json` |
 
 <!-- configs -->

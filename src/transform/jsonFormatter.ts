@@ -13,10 +13,11 @@ export class JsonFormatter implements Formatter {
     return JSON.stringify(items)
   }
 
-  formatLocations(locations: Record<string, any>[]): string {
+  formatLocations(locations: Record<string, any>[], _label?: string): string {
     const grouped: Record<string, Record<string, any>[]> = {}
     for (const loc of locations) {
-      if (!grouped[loc.file]) grouped[loc.file] = []
+      if (!grouped[loc.file])
+        grouped[loc.file] = []
       grouped[loc.file].push({ range: loc.range })
     }
     return JSON.stringify(grouped)
@@ -38,8 +39,10 @@ export class JsonFormatter implements Formatter {
     const grouped: Record<string, any[]> = {}
     for (const s of symbols) {
       const { file, ...rest } = s
-      if (!file) continue
-      if (!grouped[file]) grouped[file] = []
+      if (!file)
+        continue
+      if (!grouped[file])
+        grouped[file] = []
       grouped[file].push(rest)
     }
     return JSON.stringify(grouped)
@@ -49,8 +52,10 @@ export class JsonFormatter implements Formatter {
     const grouped: Record<string, any[]> = {}
     for (const item of items) {
       const { file, ...rest } = item
-      if (!file) continue
-      if (!grouped[file]) grouped[file] = []
+      if (!file)
+        continue
+      if (!grouped[file])
+        grouped[file] = []
       grouped[file].push(rest)
     }
     return JSON.stringify(grouped)
@@ -60,9 +65,11 @@ export class JsonFormatter implements Formatter {
     const grouped: Record<string, any[]> = {}
     for (const call of calls) {
       const file = call.caller?.file
-      if (!file) continue
+      if (!file)
+        continue
       const { file: _cf, ...callerRest } = call.caller || {}
-      if (!grouped[file]) grouped[file] = []
+      if (!grouped[file])
+        grouped[file] = []
       grouped[file].push({ caller: callerRest, callSites: call.callSites })
     }
     return JSON.stringify(grouped)
@@ -72,9 +79,11 @@ export class JsonFormatter implements Formatter {
     const grouped: Record<string, any[]> = {}
     for (const call of calls) {
       const file = call.callee?.file
-      if (!file) continue
+      if (!file)
+        continue
       const { file: _cf, ...calleeRest } = call.callee || {}
-      if (!grouped[file]) grouped[file] = []
+      if (!grouped[file])
+        grouped[file] = []
       grouped[file].push({ callee: calleeRest, callSites: call.callSites })
     }
     return JSON.stringify(grouped)

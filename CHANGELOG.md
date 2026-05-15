@@ -23,3 +23,23 @@
 - 新增 `get_class_file_contents` MCP 工具
   - 通过 jdt:// URI 获取 jdtls 反编译的 Java 类源码
   - 典型用法：`get_definition` 返回依赖库中的 jdt:// URI 时，可调用本工具获取该类的反编译源码，便于 AI 阅读依赖实现
+
+## [0.1.0] - 2026-05-15
+
+### Breaking Changes
+- **Position 参数重构**：`position: "8:16"` (0-based string) → `line: 9, character: 17` (1-based integer)
+  - 输入输出统一 1-based，与编辑器显示一致
+  - `line` 和 `character` 为 optional，不需要位置的操作（`document_symbols`、`workspace_symbols`、`class_file_contents`）无需传入
+  - 输出中的行列号（range、namePosition、callSites）同步改为 1-based，可直接用于链式调用
+
+### Added
+- 新增 `lsp-mcp.maxResults` 配置项（默认 200），控制 completions、workspace_symbols 等列表类结果的最大条目数
+- Markdown 格式输出：`incoming_calls` / `outgoing_calls` 补充 `namePosition`，支持 LLM 链式调用
+- 工具描述（tool description）大幅补充：每个操作包含返回值说明、链式调用提示
+
+### Fixed
+- `rename` 缺 `newName` / `workspace_symbols` 缺 `query` 时不再暴露 VSCode 内部 API 名，返回友好错误消息
+- `completions` 输出不再无限增长（此前 React 项目实测 434K 字符），受 `maxResults` 配置截断
+- Markdown 格式输出：`references` / `definition` / `declaration` / `implementation` 标题从硬编码 `## Locations` 改为与操作名匹配（`## References`、`## Definition` 等）
+- `pnpm-workspace.yaml` 移除 `allowBuilds` placeholder 残留
+- `src/lsp/tools.ts` 移除多余分号

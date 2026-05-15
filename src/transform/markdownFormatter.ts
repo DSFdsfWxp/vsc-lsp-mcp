@@ -14,35 +14,43 @@ export class MarkdownFormatter implements Formatter {
     if (contents.length === 0) {
       return '## Hover\n\nNo hover information available.'
     }
-    return '## Hover\n\n' + contents.join('\n\n---\n\n')
+    return `## Hover\n\n${contents.join('\n\n---\n\n')}`
   }
 
   formatCompletions(items: Record<string, any>[]): string {
     if (items.length === 0) {
       return '## Completions\n\nNo completions available.'
     }
+
     const lines = items.map((item) => {
       let line = `- \`${item.label}\``
-      if (item.kind) line += ` (${item.kind})`
-      if (item.detail) line += `: ${item.detail}`
+      if (item.kind)
+        line += ` (${item.kind})`
+      if (item.detail)
+        line += `: ${item.detail}`
       return line
     })
-    return '## Completions\n\n' + lines.join('\n')
+
+    return `## Completions\n\n${lines.join('\n')}`
   }
 
-  formatLocations(locations: Record<string, any>[]): string {
+  formatLocations(locations: Record<string, any>[], label = 'Locations'): string {
     if (locations.length === 0) {
-      return '## Locations\n\nNo locations found.'
+      return `## ${label}\n\nNo ${label.toLowerCase()} found.`
     }
+
     const grouped: Record<string, string[]> = {}
     for (const loc of locations) {
-      if (!grouped[loc.file]) grouped[loc.file] = []
+      if (!grouped[loc.file])
+        grouped[loc.file] = []
       grouped[loc.file].push(loc.range)
     }
+
     const lines = Object.entries(grouped).map(([file, ranges]) =>
       `- \`${file}\`: ${ranges.map(r => `line ${r}`).join(', ')}`,
     )
-    return '## Locations\n\n' + lines.join('\n')
+
+    return `## ${label}\n\n${lines.join('\n')}`
   }
 
   formatRename(result: Record<string, any>): string {
@@ -55,90 +63,125 @@ export class MarkdownFormatter implements Formatter {
   }
 
   formatDocumentSymbols(symbols: Record<string, any>[]): string {
-    if (symbols.length === 0) return '## Document Symbols\n\nNo symbols found.'
-    const lines = symbols.map((s) => this._renderFlatSymbol(s, 0))
-    return '## Document Symbols\n\n' + lines.join('\n')
+    if (symbols.length === 0)
+      return '## Document Symbols\n\nNo symbols found.'
+
+    const lines = symbols.map(s => this._renderFlatSymbol(s, 0))
+    return `## Document Symbols\n\n${lines.join('\n')}`
   }
 
   formatWorkspaceSymbols(symbols: Record<string, any>[]): string {
-    if (symbols.length === 0) return '## Workspace Symbols\n\nNo symbols found.'
+    if (symbols.length === 0)
+      return '## Workspace Symbols\n\nNo symbols found.'
     const grouped: Record<string, any[]> = {}
+
     for (const s of symbols) {
       const { file, ...rest } = s
-      if (!file) continue
-      if (!grouped[file]) grouped[file] = []
+      if (!file)
+        continue
+      if (!grouped[file])
+        grouped[file] = []
       grouped[file].push(rest)
     }
+
     const lines = Object.entries(grouped).flatMap(([file, items]) => {
       const itemLines = items.map((item) => {
         const parts: string[] = [`line ${item.range}`]
-        if (item.containerName) parts.push(`nested in \`${item.containerName}\``)
+        if (item.containerName)
+          parts.push(`nested in \`${item.containerName}\``)
         return `  - \`${item.name}\` (${item.kind}): ${parts.join(', ')}`
       })
       return [`\`${file}\``, ...itemLines]
     })
-    return '## Workspace Symbols\n\n' + lines.join('\n')
+
+    return `## Workspace Symbols\n\n${lines.join('\n')}`
   }
 
   formatCallHierarchyItems(items: Record<string, any>[]): string {
-    if (items.length === 0) return '## Call Hierarchy\n\nNo items found.'
+    if (items.length === 0)
+      return '## Call Hierarchy\n\nNo items found.'
+
     const grouped: Record<string, any[]> = {}
     for (const item of items) {
       const { file, ...rest } = item
-      if (!file) continue
-      if (!grouped[file]) grouped[file] = []
+      if (!file)
+        continue
+      if (!grouped[file])
+        grouped[file] = []
       grouped[file].push(rest)
     }
+
     const lines = Object.entries(grouped).flatMap(([file, items]) => {
       const itemLines = items.map((item) => {
         const parts: string[] = [`line ${item.range}`]
-        if (item.namePosition) parts.push(`name at ${item.namePosition}`)
-        if (item.detail) parts.push(`detail: ${item.detail}`)
+        if (item.namePosition)
+          parts.push(`name at ${item.namePosition}`)
+        if (item.detail)
+          parts.push(`detail: ${item.detail}`)
         return `  - \`${item.name}\` (${item.kind}): ${parts.join(', ')}`
       })
       return [`\`${file}\``, ...itemLines]
     })
-    return '## Call Hierarchy\n\n' + lines.join('\n')
+
+    return `## Call Hierarchy\n\n${lines.join('\n')}`
   }
 
   formatIncomingCalls(calls: Record<string, any>[]): string {
-    if (calls.length === 0) return '## Incoming Calls\n\nNo incoming calls found.'
+    if (calls.length === 0)
+      return '## Incoming Calls\n\nNo incoming calls found.'
     const grouped: Record<string, any[]> = {}
+
     for (const call of calls) {
       const file = call.caller?.file
-      if (!file) continue
-      if (!grouped[file]) grouped[file] = []
+      if (!file)
+        continue
+      if (!grouped[file])
+        grouped[file] = []
       grouped[file].push(call)
     }
+
     const lines = Object.entries(grouped).flatMap(([file, items]) => {
       const itemLines = items.map((call) => {
         const parts: string[] = [`line ${call.caller.range}`]
-        if (call.callSites?.length) parts.push(`called at: ${call.callSites.join(', ')}`)
+        if (call.caller.namePosition)
+          parts.push(`name at ${call.caller.namePosition}`)
+        if (call.callSites?.length)
+          parts.push(`called at: ${call.callSites.join(', ')}`)
         return `  - \`${call.caller.name}\` (${call.caller.kind}): ${parts.join(', ')}`
       })
       return [`\`${file}\``, ...itemLines]
     })
-    return '## Incoming Calls\n\n' + lines.join('\n')
+
+    return `## Incoming Calls\n\n${lines.join('\n')}`
   }
 
   formatOutgoingCalls(calls: Record<string, any>[]): string {
-    if (calls.length === 0) return '## Outgoing Calls\n\nNo outgoing calls found or operation not supported.'
+    if (calls.length === 0)
+      return '## Outgoing Calls\n\nNo outgoing calls found or operation not supported.'
     const grouped: Record<string, any[]> = {}
+
     for (const call of calls) {
       const file = call.callee?.file
-      if (!file) continue
-      if (!grouped[file]) grouped[file] = []
+      if (!file)
+        continue
+      if (!grouped[file])
+        grouped[file] = []
       grouped[file].push(call)
     }
+
     const lines = Object.entries(grouped).flatMap(([file, items]) => {
       const itemLines = items.map((call) => {
         const parts: string[] = [`line ${call.callee.range}`]
-        if (call.callSites?.length) parts.push(`called at: ${call.callSites.join(', ')}`)
+        if (call.callee.namePosition)
+          parts.push(`name at ${call.callee.namePosition}`)
+        if (call.callSites?.length)
+          parts.push(`called at: ${call.callSites.join(', ')}`)
         return `  - \`${call.callee.name}\` (${call.callee.kind}): ${parts.join(', ')}`
       })
       return [`\`${file}\``, ...itemLines]
     })
-    return '## Outgoing Calls\n\n' + lines.join('\n')
+
+    return `## Outgoing Calls\n\n${lines.join('\n')}`
   }
 
   /**
@@ -151,17 +194,22 @@ export class MarkdownFormatter implements Formatter {
   private _renderFlatSymbol(sym: Record<string, any>, depth: number = 0): string {
     const indent = '  '.repeat(depth)
     const parts: string[] = []
-    if (sym.range) parts.push(`line ${sym.range}`)
-    if (sym.namePosition) parts.push(`name at ${sym.namePosition}`)
-    if (sym.detail) parts.push(`detail: ${sym.detail}`)
-    if (sym.containerName) parts.push(`nested in \`${sym.containerName}\``)
+    if (sym.range)
+      parts.push(`line ${sym.range}`)
+    if (sym.namePosition)
+      parts.push(`name at ${sym.namePosition}`)
+    if (sym.detail)
+      parts.push(`detail: ${sym.detail}`)
+    if (sym.containerName)
+      parts.push(`nested in \`${sym.containerName}\``)
 
     let line = `${indent}- \`${sym.name}\` (${sym.kind})`
-    if (parts.length > 0) line += `: ${parts.join(', ')}`
+    if (parts.length > 0)
+      line += `: ${parts.join(', ')}`
 
     if (sym.children && sym.children.length > 0) {
       const childLines = sym.children.map((c: Record<string, any>) => this._renderFlatSymbol(c, depth + 1))
-      return line + '\n' + childLines.join('\n')
+      return `${line}\n${childLines.join('\n')}`
     }
 
     return line

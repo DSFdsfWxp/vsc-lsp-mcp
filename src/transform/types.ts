@@ -11,7 +11,7 @@ export interface Formatter {
    * @param contents - Array of plain text strings extracted from hover results
    * @returns Formatted string
    */
-  formatHover(contents: string[]): string
+  formatHover: (contents: string[]) => string
 
   /**
    * Format completion items
@@ -19,15 +19,16 @@ export interface Formatter {
    * @param items - Array of flattened completion items ({label, kind?, detail?})
    * @returns Formatted string
    */
-  formatCompletions(items: Record<string, any>[]): string
+  formatCompletions: (items: Record<string, any>[]) => string
 
   /**
    * Format location results
    *
    * @param locations - Array of flattened locations ({file, range})
+   * @param label - Display label for the section heading (e.g. "References", "Definition")
    * @returns Formatted string
    */
-  formatLocations(locations: Record<string, any>[]): string
+  formatLocations: (locations: Record<string, any>[], label?: string) => string
 
   /**
    * Format rename summary
@@ -35,7 +36,7 @@ export interface Formatter {
    * @param result - Flattened rename result ({success, newName, filesChanged, totalEdits})
    * @returns Formatted string
    */
-  formatRename(result: Record<string, any>): string
+  formatRename: (result: Record<string, any>) => string
 
   /**
    * Format decompiled class file source text
@@ -43,7 +44,7 @@ export interface Formatter {
    * @param text - Raw source code string
    * @returns Formatted string
    */
-  formatClassFile(text: string): string
+  formatClassFile: (text: string) => string
 
   /**
    * Format document symbols (outline)
@@ -51,7 +52,7 @@ export interface Formatter {
    * @param symbols - Array of flattened symbols ({name, kind, range?, namePosition?, detail?, containerName?, children?})
    * @returns Formatted string
    */
-  formatDocumentSymbols(symbols: Record<string, any>[]): string
+  formatDocumentSymbols: (symbols: Record<string, any>[]) => string
 
   /**
    * Format workspace symbols
@@ -59,7 +60,7 @@ export interface Formatter {
    * @param symbols - Array of flattened workspace symbols ({name, kind, file, range, containerName?})
    * @returns Formatted string
    */
-  formatWorkspaceSymbols(symbols: Record<string, any>[]): string
+  formatWorkspaceSymbols: (symbols: Record<string, any>[]) => string
 
   /**
    * Format call hierarchy items
@@ -67,7 +68,7 @@ export interface Formatter {
    * @param items - Array of flattened call hierarchy items ({name, kind, detail?, file, range, namePosition})
    * @returns Formatted string
    */
-  formatCallHierarchyItems(items: Record<string, any>[]): string
+  formatCallHierarchyItems: (items: Record<string, any>[]) => string
 
   /**
    * Format incoming calls
@@ -75,7 +76,7 @@ export interface Formatter {
    * @param calls - Array of flattened incoming calls ({caller: {name, kind, ...}, callSites: string[]})
    * @returns Formatted string
    */
-  formatIncomingCalls(calls: Record<string, any>[]): string
+  formatIncomingCalls: (calls: Record<string, any>[]) => string
 
   /**
    * Format outgoing calls
@@ -83,5 +84,5 @@ export interface Formatter {
    * @param calls - Array of flattened outgoing calls ({callee: {name, kind, ...}, callSites: string[]})
    * @returns Formatted string
    */
-  formatOutgoingCalls(calls: Record<string, any>[]): string
+  formatOutgoingCalls: (calls: Record<string, any>[]) => string
 }

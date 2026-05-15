@@ -69,6 +69,12 @@
           "default": "Mcp-Session-Id",
           "description": "Headers that browsers are allowed to access. Provide a comma-separated list of headers (e.g., 'Mcp-Session-Id,Content-Type')."
         },
+        "lsp-mcp.maxResults": {
+          "type": "number",
+          "default": 200,
+          "minimum": 1,
+          "description": "Maximum number of items returned for list-type results (completions, workspace_symbols, etc.). Prevents excessive token usage."
+        },
         "lsp-mcp.outputFormat": {
           "type": "string",
           "default": "json",

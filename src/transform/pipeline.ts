@@ -1,19 +1,19 @@
-import * as vscode from 'vscode'
 import type { Formatter } from './types'
-import { JsonFormatter } from './jsonFormatter'
-import { MarkdownFormatter } from './markdownFormatter'
+import * as vscode from 'vscode'
 import {
-  flattenLocation,
-  flattenLocationLink,
-  flattenSymbol,
-  flattenWorkspaceSymbols,
+  extractContentText,
   flattenCallHierarchyItem,
   flattenIncomingCall,
-  flattenOutgoingCall,
-  extractContentText,
   flattenLabel,
+  flattenLocation,
+  flattenLocationLink,
+  flattenOutgoingCall,
+  flattenSymbol,
+  flattenWorkspaceSymbols,
   kindNames,
 } from './flatten'
+import { JsonFormatter } from './jsonFormatter'
+import { MarkdownFormatter } from './markdownFormatter'
 
 /**
  * TransformService is the pipeline entry-point for all formatting operations.
@@ -38,57 +38,77 @@ export class TransformService {
   private _formatter: Formatter | null = null
   private _lastFormat: string | null = null
 
+  private _getConfig() {
+    const config = vscode.workspace.getConfiguration('lsp-mcp')
+    return {
+      maxResults: config.get<number>('maxResults', 200),
+      outputFormat: config.get<string>('outputFormat', 'json'),
+    }
+  }
+
   private _getFormatter(): Formatter {
-    const format = vscode.workspace.getConfiguration('lsp-mcp').get<string>('outputFormat', 'json')
-    if (format !== this._lastFormat || !this._formatter) {
-      this._lastFormat = format
-      this._formatter = format === 'markdown' ? new MarkdownFormatter() : new JsonFormatter()
+    const { outputFormat } = this._getConfig()
+    if (outputFormat !== this._lastFormat || !this._formatter) {
+      this._lastFormat = outputFormat
+      this._formatter = outputFormat === 'markdown' ? new MarkdownFormatter() : new JsonFormatter()
     }
     return this._formatter
   }
 
   formatHover(hovers: vscode.Hover[]): string {
-    const contents = hovers.map((h) =>
+    const contents = hovers.map(h =>
       h.contents.map(extractContentText).filter(Boolean).join('\n\n').trim(),
     ).filter(Boolean)
     return this._getFormatter().formatHover(contents)
   }
 
   formatCompletions(list: vscode.CompletionList): string {
-    const items = list.items.map((item) => ({
+    const { maxResults } = this._getConfig()
+    const total = list.items.length
+    const items = list.items.slice(0, maxResults).map(item => ({
       label: flattenLabel(item.label),
       kind: item.kind !== undefined ? (kindNames[item.kind] ?? 'Unknown') : undefined,
       detail: item.detail || undefined,
     }))
-    return this._getFormatter().formatCompletions(items)
+
+    const result = this._getFormatter().formatCompletions(items)
+    if (total > maxResults) {
+      return `${result}\n\n(Showing ${maxResults} of ${total} items)`
+    }
+    return result
   }
 
-  formatLocations(locations: vscode.Location[]): string {
-    return this._getFormatter().formatLocations(locations.map(flattenLocation))
+  formatLocations(locations: vscode.Location[], label?: string): string {
+    return this._getFormatter().formatLocations(locations.map(flattenLocation), label)
   }
 
   formatLocationsOrLinks(
     items: vscode.Location | vscode.Location[] | vscode.LocationLink[],
+    label?: string,
   ): string {
     if (Array.isArray(items)) {
-      if (items.length === 0) return this._getFormatter().formatLocations([])
+      if (items.length === 0)
+        return this._getFormatter().formatLocations([], label)
       if ('targetUri' in items[0]) {
         return this._getFormatter().formatLocations(
           (items as vscode.LocationLink[]).map(flattenLocationLink),
+          label,
         )
       }
       return this._getFormatter().formatLocations(
         (items as vscode.Location[]).map(flattenLocation),
+        label,
       )
     }
-    return this._getFormatter().formatLocations([flattenLocation(items)])
+    return this._getFormatter().formatLocations([flattenLocation(items)], label)
   }
 
   formatRename(edit: vscode.WorkspaceEdit, newName: string): string {
     let filesChanged = 0
     let totalEdits = 0
     for (const [, textEdits] of edit.entries()) {
-      if (textEdits.length > 0) filesChanged++
+      if (textEdits.length > 0)
+        filesChanged++
       totalEdits += textEdits.length
     }
     return this._getFormatter().formatRename({
@@ -110,7 +130,16 @@ export class TransformService {
   }
 
   async formatWorkspaceSymbols(symbols: vscode.SymbolInformation[]): Promise<string> {
-    return this._getFormatter().formatWorkspaceSymbols(await flattenWorkspaceSymbols(symbols))
+    const { maxResults } = this._getConfig()
+    const allItems = await flattenWorkspaceSymbols(symbols)
+    const total = allItems.length
+    const items = allItems.slice(0, maxResults)
+
+    const result = this._getFormatter().formatWorkspaceSymbols(items)
+    if (total > maxResults) {
+      return `${result}\n\n(Showing ${maxResults} of ${total} symbols)`
+    }
+    return result
   }
 
   formatCallHierarchyItems(items: vscode.CallHierarchyItem[]): string {

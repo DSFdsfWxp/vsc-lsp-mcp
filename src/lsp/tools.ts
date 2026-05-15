@@ -10,7 +10,7 @@ import { logger } from '../utils/logger'
  * @returns VSCode Uri
  */
 function resolveUri(input: string): vscode.Uri {
- if (/^(file|jdt):\/\//.test(input)) {
+  if (/^(file|jdt):\/\//.test(input)) {
     return vscode.Uri.parse(input)
   }
   return vscode.Uri.file(input)
@@ -28,7 +28,7 @@ export async function getDocument(uri: string): Promise<vscode.TextDocument | un
 
     for (const doc of vscode.workspace.textDocuments) {
       if (doc.uri.toString() === docUri.toString())
-        return doc;
+        return doc
     }
 
     for (const editor of vscode.window.visibleTextEditors) {

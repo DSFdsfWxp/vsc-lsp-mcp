@@ -18,24 +18,24 @@ export const kindNames = generateEnumNameMap(vscode.CompletionItemKind)
 export const symbolKindNames = generateEnumNameMap(vscode.SymbolKind)
 
 /**
- * Convert a VSCode Range to a compact line-only string pair
+ * Convert a VSCode Range to a compact 1-based line-only string pair
  *
- * @param range - VSCode Range
- * @returns string with "startLine-endLine"
+ * @param range - VSCode Range (0-based internally)
+ * @returns string with "startLine-endLine" (1-based, matching editor display)
  */
 function formatRangeLines(range: vscode.Range): string {
-  return `${range.start.line}-${range.end.line}`
+  return `${range.start.line + 1}-${range.end.line + 1}`
 }
 
 /**
- * Convert a VSCode Range to a compact string pair with character offsets
+ * Convert a VSCode Range to a compact 1-based string pair with character offsets
  * Kept for namePosition and callSites which need character-level precision.
  *
- * @param range - VSCode Range
- * @returns string with "line:char" sub strings for start and end
+ * @param range - VSCode Range (0-based internally)
+ * @returns string with "line:char" sub strings for start and end (1-based)
  */
 export function formatRange(range: vscode.Range): string {
-  return `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`
+  return `${range.start.line + 1}:${range.start.character + 1}-${range.end.line + 1}:${range.end.character + 1}`
 }
 
 /**
@@ -97,10 +97,13 @@ export function extractContentText(content: vscode.MarkdownString | vscode.Marke
  * @returns Flattened label text
  */
 export function flattenLabel(label: string | vscode.CompletionItemLabel): string {
-  if (typeof label === 'string') return label
+  if (typeof label === 'string')
+    return label
   let result = label.label
-  if (label.detail) result += label.detail
-  if (label.description) result += ` (${label.description})`
+  if (label.detail)
+    result += label.detail
+  if (label.description)
+    result += ` (${label.description})`
   return result
 }
 
@@ -130,11 +133,13 @@ export function flattenSymbol(
 
   if ('location' in symbol) {
     base.range = formatRangeLines(symbol.location.range)
-    if (symbol.containerName) base.containerName = symbol.containerName
+    if (symbol.containerName)
+      base.containerName = symbol.containerName
   }
 
   if ('detail' in symbol) {
-    if (symbol.detail) base.detail = symbol.detail
+    if (symbol.detail)
+      base.detail = symbol.detail
     base.range = formatRangeLines(symbol.range)
     base.namePosition = formatRange(symbol.selectionRange).split('-')[0]
   }
@@ -161,7 +166,7 @@ export function flattenSymbol(
     }
     else {
       const deep = !LEAF_CONTAINER_KINDS.has(symbol.kind)
-      base.children = symbol.children.map((child) => flattenSymbol(child, deep))
+      base.children = symbol.children.map(child => flattenSymbol(child, deep))
     }
   }
 
@@ -194,7 +199,7 @@ export async function flattenWorkspaceSymbols(
     vscode.SymbolKind.Variable,
     vscode.SymbolKind.Field,
     vscode.SymbolKind.Property,
-    vscode.SymbolKind.Constant
+    vscode.SymbolKind.Constant,
   ])
 
   async function resolveContainerKind(
@@ -209,9 +214,9 @@ export async function flattenWorkspaceSymbols(
         Promise.resolve(
           vscode.commands.executeCommand<(vscode.SymbolInformation[] | vscode.DocumentSymbol[])>(
             'vscode.executeDocumentSymbolProvider',
-            uri,
+          uri,
           ),
-        ).then((result) => result ?? []),
+        ).then(result => result ?? []),
       )
     }
 
