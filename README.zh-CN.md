@@ -43,19 +43,34 @@ VSCode LSP MCP 是一个 Visual Studio Code 扩展。**扩展 ID**：`cjl.lsp-mc
 
 - 🔄 **LSP 桥接**：将 LSP 功能转换为 MCP 工具
 - 🔌 **多实例支持**：自动处理多个 VSCode 窗口的端口冲突
-- 🧠 **丰富的代码上下文**：通过 LSP 提供准确的符号信息
+- 🧠 **16 项 LSP 操作**：涵盖代码导航（定义、声明、实现、引用）、文档信息（悬停、补全）、结构分析（文档/工作区符号、调用层次）、代码重构（重命名）
 - ☕ **Java 依赖源码**：通过 `jdt://` URI 获取 jdtls 反编译的类源码，便于 AI 阅读依赖库实现
+- 📄 **双格式输出**：JSON 用于机器处理，Markdown 用于 LLM 友好阅读
 
 ## 🛠️ 暴露的 MCP 工具
 
-| 工具 | 描述 |
+| 操作 | 描述 |
 |------|-------------|
-| `get_hover` | 获取符号的悬停信息 |
-| `get_definition` | 查找符号定义 |
-| `get_completions` | 获取智能代码补全 |
-| `get_references` | 查找符号的所有引用 |
-| `get_class_file_contents` | 通过 jdt:// URI 获取反编译的 Java 类源码（如 `get_definition` 指向依赖 JAR 时返回的 URI） |
-| `rename_symbol` | 跨文件重命名符号 |
+| `hover` | 获取指定位置的悬停信息（文档、类型等） |
+| `definition` | 获取符号的定义位置 |
+| `declaration` | 获取符号的声明位置 |
+| `implementation` | 获取符号的实现位置 |
+| `references` | 查找符号的所有引用位置 |
+| `completions` | 获取智能代码补全建议 |
+| `document_symbols` | 获取文档的符号大纲树 |
+| `workspace_symbols` | 按查询词在整个工作区搜索符号 |
+| `class_file_contents` | 通过 jdt:// URI 获取反编译的 Java 类源码，用于阅读依赖库实现 |
+| `rename` | 在工作区内重命名符号 |
+| `symbol_at_position` | 获取指定位置的符号元数据（名称、类型、范围） |
+| `incoming_calls` | 查找所有调用当前符号的位置 |
+| `outgoing_calls` | 查找当前符号调用的所有被调用者 |
+
+所有操作通过单个 `execute_lsp` MCP 工具调用，输入格式统一：
+- `operation` — 要执行的 LSP 操作
+- `uri` — 文件路径或 URI（支持普通路径和 `file://`/`jdt://` URI）
+- `position` — `行号:字符偏移`（均从 0 开始）
+- `newName` — 仅 `rename` 操作需要
+- `query` — 仅 `workspace_symbols` 操作需要
 
 ## 📋 配置
 
@@ -70,6 +85,7 @@ VSCode LSP MCP 是一个 Visual Studio Code 扩展。**扩展 ID**：`cjl.lsp-mc
 | `lsp-mcp.cors.allowOrigins`       | 允许的 CORS 源。使用 `*` 允许所有源，或提供逗号分隔的源列表（例如 `http://localhost:3000,http://localhost:5173`） | `string`  | `*`     |
 | `lsp-mcp.cors.withCredentials`    | 是否允许在 CORS 请求中携带凭证（cookie、授权标头）                                         | `boolean` | `false` |
 | `lsp-mcp.cors.exposeHeaders`      | 允许浏览器访问的响应头。提供逗号分隔的头列表（例如 `Mcp-Session-Id`）        | `string`  | `Mcp-Session-Id` |
+| `lsp-mcp.outputFormat`         | LSP 操作结果的输出格式。`json` 为机器可读 JSON，`markdown` 为 LLM 友好的 Markdown                  | `string`  | `json` |
 
 <!-- configs -->
 

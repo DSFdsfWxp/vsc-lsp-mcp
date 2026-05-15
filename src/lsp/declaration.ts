@@ -3,18 +3,18 @@ import { logger } from '../utils/logger'
 import { getDocument } from './tools'
 
 /**
- * Get code completion suggestions at a given position.
+ * Get the declaration location of a symbol.
  *
  * @param uri - The document URI
  * @param line - Line number (0-based)
  * @param character - Character offset (0-based)
- * @returns Raw VSCode CompletionList
+ * @returns Raw VSCode Location / Location[] / LocationLink[]
  */
-export async function getCompletions(
+export async function getDeclarations(
   uri: string,
   line: number,
   character: number,
-): Promise<vscode.CompletionList> {
+): Promise<vscode.Location | vscode.Location[] | vscode.LocationLink[]> {
   try {
     const document = await getDocument(uri)
     if (!document) {
@@ -23,20 +23,18 @@ export async function getCompletions(
 
     const position = new vscode.Position(line, character)
 
-    logger.info(`Getting completions: ${uri} line:${line} col:${character}`)
+    logger.info(`Getting declarations: ${uri} line:${line} col:${character}`)
 
-    const result = await vscode.commands.executeCommand<vscode.CompletionList>(
-      'vscode.executeCompletionItemProvider',
+    return await vscode.commands.executeCommand<
+      vscode.Location | vscode.Location[] | vscode.LocationLink[]
+    >(
+      'vscode.executeDeclarationProvider',
       document.uri,
       position,
-      undefined,
-      30,
     )
-
-    return result ?? new vscode.CompletionList([])
   }
   catch (error) {
-    logger.error('Failed to get completions', error)
+    logger.error('Failed to get declarations', error)
     throw error
   }
 }

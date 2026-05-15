@@ -3,13 +3,12 @@ import { logger } from '../utils/logger'
 import { getDocument } from './tools'
 
 /**
- * 获取符号的引用位置
+ * Find all references to a symbol.
  *
- * @param uri 文档URI
- * @param line 行号（从0开始）
- * @param character 字符位置（从0开始）
- * @param includeDeclaration 是否包含声明
- * @returns 引用位置列表
+ * @param uri - The document URI
+ * @param line - Line number (0-based)
+ * @param character - Character offset (0-based)
+ * @returns Raw VSCode Location array
  */
 export async function getReferences(
   uri: string,
@@ -19,14 +18,13 @@ export async function getReferences(
   try {
     const document = await getDocument(uri)
     if (!document) {
-      throw new Error(`无法找到文档: ${uri}`)
+      throw new Error(`Failed to find document: ${uri}`)
     }
 
     const position = new vscode.Position(line, character)
 
-    logger.info(`获取引用: ${uri} 行:${line} 列:${character}`)
+    logger.info(`Getting references: ${uri} line:${line} col:${character}`)
 
-    // 调用VSCode API获取引用位置
     const references = await vscode.commands.executeCommand<vscode.Location[]>(
       'vscode.executeReferenceProvider',
       document.uri,
@@ -36,7 +34,7 @@ export async function getReferences(
     return references || []
   }
   catch (error) {
-    logger.error('获取引用失败', error)
+    logger.error('Failed to get references', error)
     throw error
   }
 }

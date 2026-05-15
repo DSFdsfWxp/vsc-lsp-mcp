@@ -68,6 +68,15 @@
           "type": "string",
           "default": "Mcp-Session-Id",
           "description": "Headers that browsers are allowed to access. Provide a comma-separated list of headers (e.g., 'Mcp-Session-Id,Content-Type')."
+        },
+        "lsp-mcp.outputFormat": {
+          "type": "string",
+          "default": "json",
+          "enum": [
+            "json",
+            "markdown"
+          ],
+          "description": "Output format for LSP operation results. 'json' for machine-readable JSON, 'markdown' for LLM-friendly Markdown."
         }
       }
     }
