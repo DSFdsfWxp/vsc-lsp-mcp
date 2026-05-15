@@ -5,8 +5,20 @@
 </p>
 
 <p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=CJL.lsp-mcp">
+    <img alt="VS Marketplace Version" src="https://badgen.net/vs-marketplace/v/CJL.lsp-mcp" />
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=CJL.lsp-mcp">
+    <img alt="VS Marketplace Installs" src="https://badgen.net/vs-marketplace/i/CJL.lsp-mcp" />
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=CJL.lsp-mcp">
+    <img alt="VS Marketplace Rating" src="https://badgen.net/vs-marketplace/rating/CJL.lsp-mcp" />
+  </a>
+  <a href="https://github.com/beixiyo/vsc-lsp-mcp">
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/beixiyo/vsc-lsp-mcp?style=flat" />
+  </a>
   <img alt="License" src="https://img.shields.io/badge/License-MIT-yellow.svg" />
-  <img alt="github" src="https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" />
 </p>
 
 <p align="center">
@@ -109,8 +121,6 @@ Config file: `~/.cursor/mcp.json` (e.g. `%USERPROFILE%\.cursor\mcp.json` on Wind
 }
 ```
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.png)](https://cursor.com/install-mcp?name=lsp&config=JTdCJTIydXJsJTIyJTNBJTIyaHR0cCUzQSUyRiUyRjEyNy4wLjAuMSUzQTk1MjclMkZtY3AlMjIlN0Q%3D)
-
 ### OpenCode
 
 Config file: `~/.config/opencode/opencode.jsonc`
@@ -157,6 +167,15 @@ Config file: `~/.gemini/settings.json`
 }
 ```
 
+### Codex
+
+Config file: `~/.codex/config.toml`
+
+```toml
+[mcp_servers.lsp-mcp]
+url = "http://127.0.0.1:9527/mcp"
+```
+
 ### Roo Code
 
 ```json
@@ -170,6 +189,8 @@ Config file: `~/.gemini/settings.json`
   }
 }
 ```
+
+---
 
 ## 💻 Development
 

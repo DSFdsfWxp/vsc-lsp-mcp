@@ -24,7 +24,7 @@ export async function getDocumentSymbols(
     )>(
       'vscode.executeDocumentSymbolProvider',
       document.uri,
-    )
+      )
 
     return symbols || []
   }
